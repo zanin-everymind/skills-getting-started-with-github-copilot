@@ -41,7 +41,38 @@ document.addEventListener("DOMContentLoaded", () => {
         if (details.participants && details.participants.length > 0) {
           details.participants.forEach((p) => {
             const li = document.createElement("li");
-            li.textContent = p;
+
+            const span = document.createElement("span");
+            span.className = "participant-email";
+            span.textContent = p;
+
+            const btn = document.createElement("button");
+            btn.className = "delete-participant";
+            btn.type = "button";
+            btn.title = "Remove participant";
+            btn.innerHTML = "✕";
+
+            btn.addEventListener("click", async () => {
+              try {
+                const res = await fetch(
+                  `/activities/${encodeURIComponent(name)}/unregister?email=${encodeURIComponent(p)}`,
+                  { method: "POST" }
+                );
+                const result = await res.json();
+                if (res.ok) {
+                  // Refresh the activities list to reflect changes
+                  fetchActivities();
+                } else {
+                  alert(result.detail || "Failed to remove participant");
+                }
+              } catch (err) {
+                console.error("Error removing participant:", err);
+                alert("Failed to remove participant");
+              }
+            });
+
+            li.appendChild(span);
+            li.appendChild(btn);
             participantsList.appendChild(li);
           });
         } else {
@@ -89,6 +120,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities to show the newly registered participant
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
